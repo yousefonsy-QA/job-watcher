@@ -1,0 +1,41 @@
+name: Job Watcher
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # every 15 minutes (GitHub may delay scheduled runs at busy times)
+  workflow_dispatch:          # "Run workflow" button for manual runs
+
+concurrency:
+  group: job-watcher
+  cancel-in-progress: false
+
+permissions:
+  contents: write             # commit watcher_seen.json / jobs.json back
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check LinkedIn and notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python job_watcher.py
+
+      - name: Save state
+        if: always()
+        run: |
+          git config user.name "job-watcher-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add watcher_seen.json jobs.json 2>/dev/null || git add watcher_seen.json
+          git diff --cached --quiet && exit 0
+          git commit -m "state: watcher run $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git pull --rebase -q && git push -q && exit 0; sleep 5; done
+          exit 1
