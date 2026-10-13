@@ -74,15 +74,27 @@ def load_env() -> dict:
     return env
 
 
-def http_get(url: str, retries: int = 3) -> str | None:
-    for attempt in range(retries):
+RUN_DEADLINE = time.monotonic() + 9 * 60  # stop well before the 15-minute schedule / job timeout
+RATE_LIMITED = {"streak": 0}              # consecutive 429s; LinkedIn is refusing us when this grows
+
+
+def out_of_time() -> bool:
+    return time.monotonic() > RUN_DEADLINE or RATE_LIMITED["streak"] >= 4
+
+
+def http_get(url: str, retries: int = 2) -> str | None:
+    for _ in range(retries):
+        if out_of_time():
+            return None
         try:
             req = urllib.request.Request(url, headers=HEADERS)
             with urllib.request.urlopen(req, timeout=20) as r:
+                RATE_LIMITED["streak"] = 0
                 return r.read().decode("utf-8", "replace")
         except urllib.error.HTTPError as e:
-            if e.code == 429:  # rate limited: back off and retry
-                time.sleep(30 * (attempt + 1))
+            if e.code == 429:  # rate limited: short back-off; give up the run if it keeps happening
+                RATE_LIMITED["streak"] += 1
+                time.sleep(15)
                 continue
             if e.code in (400, 404, 410):
                 return None
@@ -223,6 +235,8 @@ def run(dry_run: bool):
     for job_id, job in found.items():
         time.sleep(cfg["delay_seconds"])
         d = job_details(job_id)
+        if not d["text"] and not d["closed"]:
+            continue  # description not loaded (rate limit / time limit): not marked seen, retried next run
         job["applicants"] = d["applicants"]
         if d["closed"]:
             seen.add(job_id)
@@ -273,8 +287,9 @@ def run(dry_run: bool):
         except PermissionError:
             log("Excel is open — tracker not refreshed this run (jobs.json is saved)")
     total = len(cfg["locations"]) * len(cfg["keywords"])
+    note = " — stopped early: LinkedIn rate limit / time limit" if out_of_time() else ""
     log(f"checked {len(found)} new listings: {sent} sent to Telegram, {skipped} skipped "
-        f"({total - len(FAILED_SEARCHES)}/{total} searches answered by LinkedIn)")
+        f"({total - len(FAILED_SEARCHES)}/{total} searches answered by LinkedIn){note}")
 
 
 if __name__ == "__main__":
