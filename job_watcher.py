@@ -102,11 +102,15 @@ def first(pattern: str, text: str) -> str:
 
 
 # ---------------------------------------------------------------- LinkedIn
+FAILED_SEARCHES = []  # searches LinkedIn refused (rate limit / block), reported in the run log
+
+
 def search(keyword: str, location: str, window_seconds: int) -> list[dict]:
     q = urllib.parse.urlencode({"keywords": keyword, "location": location,
                                 "f_TPR": f"r{window_seconds}", "sortBy": "DD", "start": 0})
     page = http_get(f"{SEARCH_URL}?{q}")
     if not page:
+        FAILED_SEARCHES.append(f"{keyword} @ {location}")
         return []
     jobs = []
     for card in page.split("<li")[1:]:
@@ -268,7 +272,9 @@ def run(dry_run: bool):
             pass  # cloud repo: no Excel tracker, jobs.json is the record
         except PermissionError:
             log("Excel is open — tracker not refreshed this run (jobs.json is saved)")
-    log(f"checked {len(found)} new listings: {sent} sent to Telegram, {skipped} skipped")
+    total = len(cfg["locations"]) * len(cfg["keywords"])
+    log(f"checked {len(found)} new listings: {sent} sent to Telegram, {skipped} skipped "
+        f"({total - len(FAILED_SEARCHES)}/{total} searches answered by LinkedIn)")
 
 
 if __name__ == "__main__":

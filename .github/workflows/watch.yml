@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/15 * * * *"   # every 15 minutes (GitHub may delay scheduled runs at busy times)
   workflow_dispatch:          # "Run workflow" button for manual runs
+    inputs:
+      test_message:
+        description: "Only send a Telegram test message"
+        type: boolean
+        default: false
 
 concurrency:
   group: job-watcher
@@ -27,7 +32,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python job_watcher.py
+        run: python job_watcher.py ${{ inputs.test_message && '--test' || '' }}
 
       - name: Save state
         if: always()
