@@ -1,8 +1,9 @@
 {
-  "boards_last_fetch": "2026-10-14T13:15",
+  "boards_last_fetch": "2026-10-14T14:17",
   "health": {
-    "bad_streak": 2,
+    "bad_streak": 0,
     "alerted_at": null,
     "alerted_kinds": []
-  }
+  },
+  "local_heartbeat_utc": "2026-10-14T11:18+00:00"
 }
