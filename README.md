@@ -1,7 +1,7 @@
 # Job Watcher
 
 Sends newly posted Software QA jobs (QA Engineer, Software Tester, SDET, Test Automation, …)
-to Telegram with the job link and two buttons. No AI, no paid services — runs on GitHub Actions
+to Telegram with the job link. No AI, no paid services — runs on GitHub Actions
 every 15 minutes (GitHub may stretch that to ~30 minutes at busy times).
 
 ## Sources
@@ -21,11 +21,6 @@ Wuzzuf and Bayt block automated requests, so they are not included.
 
 Skipped jobs are still recorded in `jobs.json` with the reason.
 
-## Telegram buttons
-Each message has **✅ قدّمت** (applied) and **❌ مش مهتم** (not interested). Presses are processed on the
-next run (within ~30 minutes): the job's status in `jobs.json` is updated and the button changes to
-show the choice with an **Undo** (تراجع) option.
-
 ## Files
 - `watcher_config.json` — settings
 - `.github/workflows/watch.yml` — schedule; **Run workflow** also offers a Telegram test message
@@ -39,7 +34,7 @@ show the choice with an **Undo** (تراجع) option.
 ## Local use
 ```bash
 python job_watcher.py --dry-run     # print what would be sent, save nothing
-python job_watcher.py --test        # Telegram test message with buttons (needs .env)
+python job_watcher.py --test        # Telegram test message (needs .env)
 python test_job_watcher.py          # offline filter tests
 ```
 

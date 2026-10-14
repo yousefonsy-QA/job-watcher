@@ -1,4 +1,4 @@
-"""Offline checks for job_watcher filters and Telegram button handling. Run: python test_job_watcher.py"""
+"""Offline checks for job_watcher filters. Run: python test_job_watcher.py"""
 import json
 import unittest
 from pathlib import Path
@@ -57,38 +57,6 @@ class Filters(unittest.TestCase):
         self.assertTrue(reason(location="Remote - Americas", **ok).startswith("remote only for"))
         self.assertTrue(reason(location="Worldwide", text="Applicants must be authorized to work in the US.",
                                **ok).startswith("region lock"))
-
-
-class Buttons(unittest.TestCase):
-    def test_applied_then_undo(self):
-        calls = []
-        updates = [
-            {"update_id": 10, "callback_query": {"id": "c1", "data": "a|123",
-                                                 "message": {"message_id": 5, "chat": {"id": 42}}}},
-            {"update_id": 11, "callback_query": {"id": "c2", "data": "u|456",
-                                                 "message": {"message_id": 6, "chat": {"id": 42}}}},
-            {"update_id": 12, "callback_query": {"id": "c3", "data": "a|123",
-                                                 "message": {"message_id": 5, "chat": {"id": 999}}}},
-        ]
-
-        def fake(token, method, params):
-            calls.append((method, params))
-            return {"ok": True, "result": updates} if method == "getUpdates" else {"ok": True}
-
-        jobs = [{"watcher_id": "123", "status": "NEW (watcher)"}, {"watcher_id": "456", "status": "APPLIED"}]
-        state = {}
-        original, w.tg_call = w.tg_call, fake
-        try:
-            handled = w.process_button_presses("t", "42", state, jobs)
-        finally:
-            w.tg_call = original
-        self.assertEqual(handled, 2)                      # update from another chat ignored
-        self.assertEqual(jobs[0]["status"], "APPLIED")
-        self.assertEqual(jobs[1]["status"], "NEW (watcher)")
-        self.assertEqual(state["telegram_offset"], 13)
-        edits = [p for m, p in calls if m == "editMessageReplyMarkup"]
-        self.assertIn("u|123", json.dumps(edits[0]["reply_markup"]))
-        self.assertIn("a|456", json.dumps(edits[1]["reply_markup"]))
 
 
 if __name__ == "__main__":

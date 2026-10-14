@@ -1,19 +1,18 @@
 """Watch job boards for new Software QA jobs and send them to Telegram. No AI, no tokens.
 
 Every run:
-  1. Read Telegram button presses (Applied / Not interested / Undo) and update jobs.json.
-  2. LinkedIn: one OR search per country for jobs posted in the last hour.
+  1. LinkedIn: one OR search per country for jobs posted in the last hour.
      Countries marked remote_only (Gulf) keep only postings that say they are remote.
-  3. Remote boards (RemoteOK, We Work Remotely, Remotive), at most once per
+  2. Remote boards (RemoteOK, We Work Remotely, Remotive), at most once per
      `boards_every_minutes`: keep QA jobs open to candidates in Egypt / worldwide.
-  4. Filter: QA title, excluded titles/domains, nationals-only, mandatory foreign
+  3. Filter: QA title, excluded titles/domains, nationals-only, mandatory foreign
      language, minimum required years <= max_years.
-  5. Send eligible jobs to Telegram with buttons; record every new job in jobs.json.
+  4. Send eligible jobs to Telegram; record every new job in jobs.json.
 
 Usage:
   python job_watcher.py              one check (GitHub Actions runs this)
   python job_watcher.py --dry-run    one check, print only, save/send nothing
-  python job_watcher.py --test       send a Telegram test message (with buttons)
+  python job_watcher.py --test       send a Telegram test message
   python job_watcher.py --chat-id    print your Telegram chat id (setup)
 
 Settings: watcher_config.json. Secrets: environment variables (GitHub Actions secrets)
@@ -404,16 +403,6 @@ def tg_call(token: str, method: str, params: dict) -> dict:
         return {"ok": False}
 
 
-def buttons(job_id: str) -> dict:
-    return {"inline_keyboard": [[{"text": "✅ قدّمت", "callback_data": f"a|{job_id}"},
-                                 {"text": "❌ مش مهتم", "callback_data": f"x|{job_id}"}]]}
-
-
-def done_button(action: str, job_id: str, when: datetime) -> dict:
-    label = ("✅ قدّمت" if action == "a" else "❌ مش مهتم") + f" · {when:%d/%m %H:%M} · تراجع ↩"
-    return {"inline_keyboard": [[{"text": label, "callback_data": f"u|{job_id}"}]]}
-
-
 def format_message(job: dict) -> str:
     years = job["years"]
     yrs = f"{years}+ yrs" if years is not None else "years not stated"
@@ -427,39 +416,6 @@ def format_message(job: dict) -> str:
             f"🎯 {yrs}{extra}\n"
             f"📰 {job['source']}\n"
             f"🔗 {job['url']}")
-
-
-def process_button_presses(token: str, chat_id: str, state: dict, jobs: list[dict]) -> int:
-    """Apply Applied / Not interested / Undo presses made since the last run."""
-    resp = tg_call(token, "getUpdates", {"offset": state.get("telegram_offset", 0), "timeout": 0,
-                                         "allowed_updates": ["callback_query"]})
-    by_id = {j["watcher_id"]: j for j in jobs if j.get("watcher_id")}
-    handled = 0
-    for update in resp.get("result", []):
-        state["telegram_offset"] = update["update_id"] + 1
-        cq = update.get("callback_query")
-        if not cq or str(cq.get("message", {}).get("chat", {}).get("id")) != str(chat_id):
-            continue
-        action, _, job_id = (cq.get("data") or "").partition("|")
-        when = now_cairo()
-        job = by_id.get(job_id)
-        if action in ("a", "x"):
-            if job:
-                job["status"] = "APPLIED" if action == "a" else "NOT INTERESTED"
-                job["status_changed"] = when.isoformat(timespec="minutes")
-            markup = done_button(action, job_id, when)
-        elif action == "u":
-            if job:
-                job["status"] = "NEW (watcher)"
-                job["status_changed"] = when.isoformat(timespec="minutes")
-            markup = buttons(job_id)
-        else:
-            continue
-        tg_call(token, "answerCallbackQuery", {"callback_query_id": cq["id"]})  # usually expired; harmless
-        tg_call(token, "editMessageReplyMarkup", {"chat_id": chat_id, "message_id": cq["message"]["message_id"],
-                                                  "reply_markup": markup})
-        handled += 1
-    return handled
 
 
 def print_chat_id(token: str):
@@ -488,8 +444,6 @@ def run(dry_run: bool):
              if "linkedin" in j.get("job_url", "") and (m := re.search(r"(\d{9,})", j["job_url"]))}
     filters = build_filters(cfg)
     now = now_cairo()
-
-    pressed = 0 if dry_run else process_button_presses(token, chat_id, state, jobs)
 
     candidates = {}
     for job in linkedin_jobs(cfg) + board_jobs(cfg, {} if dry_run else state, now):
@@ -526,8 +480,7 @@ def run(dry_run: bool):
 
         if not reason:
             resp = tg_call(token, "sendMessage", {"chat_id": chat_id, "text": format_message(job),
-                                                  "parse_mode": "HTML", "disable_web_page_preview": "true",
-                                                  "reply_markup": buttons(job_id)})
+                                                  "parse_mode": "HTML", "disable_web_page_preview": "true"})
             if not resp.get("ok"):
                 log(f"Telegram send failed for {job_id}: {resp.get('description', '')}")
                 continue  # not marked seen: retried next run
@@ -556,12 +509,12 @@ def run(dry_run: bool):
         return
     save_json(SEEN_FILE, sorted(seen), pretty=False)
     save_json(STATE_FILE, state)
-    if sent or skipped or pressed:
+    if sent or skipped:
         save_json(JOBS_FILE, jobs)
     total = SEARCHES_MADE[0]
     note = " — stopped early: LinkedIn rate limit / time limit" if out_of_time() else ""
-    log(f"checked {len(candidates)} new listings: {sent} sent to Telegram, {skipped} skipped, "
-        f"{pressed} button presses ({total - len(FAILED_SEARCHES)}/{total} LinkedIn searches answered){note}")
+    log(f"checked {len(candidates)} new listings: {sent} sent to Telegram, {skipped} skipped "
+        f"({total - len(FAILED_SEARCHES)}/{total} LinkedIn searches answered){note}")
 
 
 def send_test(env: dict):
@@ -571,7 +524,7 @@ def send_test(env: dict):
     job["years"] = None
     resp = tg_call(env["TELEGRAM_BOT_TOKEN"], "sendMessage", {
         "chat_id": env["TELEGRAM_CHAT_ID"], "text": format_message(job), "parse_mode": "HTML",
-        "disable_web_page_preview": "true", "reply_markup": buttons("test")})
+        "disable_web_page_preview": "true"})
     print("sent" if resp.get("ok") else f"failed: {resp.get('description', '')}")
 
 
