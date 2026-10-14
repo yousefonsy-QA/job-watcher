@@ -31,11 +31,23 @@ Silence should mean "no new jobs", not "the watcher is broken". The watcher send
 While a problem lasts it reminds every 12 hours (a new kind of problem alerts immediately), and it
 sends **"back to normal"** once a run works again. Settings: `health` in `watcher_config.json`.
 
+## Two runners: laptop + GitHub
+LinkedIn often refuses requests from GitHub's servers but answers a home connection, so the watcher
+also runs on the laptop (Windows Task Scheduler, every 15 minutes, `local_runner.py` in its own clone).
+
+- Each laptop run pushes a heartbeat (`local_heartbeat_utc` in `watcher_state.json`).
+- A GitHub run that sees a heartbeat younger than `local_active_minutes` (25) skips itself.
+- When the laptop is off or asleep the heartbeat goes stale and GitHub takes over automatically.
+- Both copies share `watcher_seen.json` / `jobs.json`; `push_state.py` merges them if both push at
+  the same time, so a job is never sent twice.
+
 ## Files
 - `watcher_config.json` — settings
 - `.github/workflows/watch.yml` — schedule; **Run workflow** also offers a Telegram test message
 - `watcher_seen.json`, `watcher_state.json`, `jobs.json` — state, committed by the workflow
 - `test_job_watcher.py` — offline checks, run before every check
+- `push_state.py` — commits and pushes state, merging with the other runner if needed
+- `local_runner.py` — laptop runner (Task Scheduler)
 
 ## Setup
 1. Repository **Settings → Secrets and variables → Actions** → add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`.

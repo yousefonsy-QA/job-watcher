@@ -121,6 +121,18 @@ def save_json(path: Path, data, pretty: bool = True):
     path.write_text(text + "\n", encoding="utf-8")
 
 
+IN_GITHUB = os.environ.get("GITHUB_ACTIONS") == "true"
+
+
+def laptop_active(state: dict, cfg: dict) -> bool:
+    """True when the laptop copy ran recently; the GitHub copy then skips to avoid doubling requests."""
+    beat = state.get("local_heartbeat_utc")
+    if not beat:
+        return False
+    age = datetime.now(timezone.utc) - datetime.fromisoformat(beat)
+    return age < timedelta(minutes=cfg.get("local_active_minutes", 25))
+
+
 RUN_DEADLINE = time.monotonic() + 9 * 60  # stop well before the 15-minute schedule / job timeout
 RATE_LIMITED = {"streak": 0}              # consecutive 429s; LinkedIn is refusing us when this grows
 
@@ -515,6 +527,9 @@ def run(dry_run: bool):
 
     seen = set(load_json(SEEN_FILE, []))
     state = load_json(STATE_FILE, {})
+    if IN_GITHUB and not dry_run and laptop_active(state, cfg):
+        log(f"laptop runner is active (last run {state['local_heartbeat_utc']} UTC) — GitHub run skipped")
+        return
     jobs = load_json(JOBS_FILE, [])
     seen |= {j["watcher_id"] for j in jobs if j.get("watcher_id")}
     seen |= {m.group(1) for j in jobs
@@ -587,6 +602,8 @@ def run(dry_run: bool):
     problems = run_problems(cfg)
     update_health(state, problems, cfg, now, lambda text: tg_call(token, "sendMessage", {
         "chat_id": chat_id, "text": text, "parse_mode": "HTML", "disable_web_page_preview": "true"}))
+    if not IN_GITHUB:  # tells the GitHub copy that the laptop is covering the checks
+        state["local_heartbeat_utc"] = datetime.now(timezone.utc).isoformat(timespec="minutes")
     save_json(SEEN_FILE, sorted(seen), pretty=False)
     save_json(STATE_FILE, state)
     if sent or skipped:

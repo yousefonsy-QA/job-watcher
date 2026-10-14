@@ -106,5 +106,32 @@ class Health(unittest.TestCase):
         w.SEARCHES_MADE[0], w.FAILED_SEARCHES[:], w.PARSE_ISSUES[:] = 0, [], []
 
 
+class DualRunner(unittest.TestCase):
+    def test_laptop_active_window(self):
+        now = w.datetime.now(w.timezone.utc)
+        recent = {"local_heartbeat_utc": (now - w.timedelta(minutes=10)).isoformat(timespec="minutes")}
+        stale = {"local_heartbeat_utc": (now - w.timedelta(minutes=40)).isoformat(timespec="minutes")}
+        self.assertTrue(w.laptop_active(recent, CFG))
+        self.assertFalse(w.laptop_active(stale, CFG))
+        self.assertFalse(w.laptop_active({}, CFG))
+
+    def test_merge_keeps_both_copies_work(self):
+        import push_state
+        ours = {"watcher_seen.json": ["1", "2", "3"],
+                "jobs.json": [{"watcher_id": "2"}, {"watcher_id": "3"}],
+                "watcher_state.json": {"local_heartbeat_utc": "2026-10-14T11:00+00:00",
+                                       "boards_last_fetch": "2026-10-14T13:00", "health": {"bad_streak": 0}}}
+        theirs = {"watcher_seen.json": ["1", "2", "9"],
+                  "jobs.json": [{"watcher_id": "2"}, {"watcher_id": "9"}],
+                  "watcher_state.json": {"local_heartbeat_utc": "2026-10-14T10:30+00:00",
+                                         "boards_last_fetch": "2026-10-14T13:30", "health": {"bad_streak": 2}}}
+        m = push_state.merge(ours, theirs)
+        self.assertEqual(m["watcher_seen.json"], ["1", "2", "3", "9"])
+        self.assertEqual([j["watcher_id"] for j in m["jobs.json"]], ["2", "9", "3"])
+        self.assertEqual(m["watcher_state.json"]["local_heartbeat_utc"], "2026-10-14T11:00+00:00")
+        self.assertEqual(m["watcher_state.json"]["boards_last_fetch"], "2026-10-14T13:30")
+        self.assertEqual(m["watcher_state.json"]["health"], {"bad_streak": 0})
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)
