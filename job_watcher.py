@@ -117,12 +117,28 @@ def first(pattern: str, text: str) -> str:
 FAILED_SEARCHES = []  # searches LinkedIn refused (rate limit / block), reported in the run log
 
 
-def search(keyword: str, location: str, window_seconds: int) -> list[dict]:
-    q = urllib.parse.urlencode({"keywords": keyword, "location": location,
-                                "f_TPR": f"r{window_seconds}", "sortBy": "DD", "start": 0})
+SEARCHES_MADE = [0]
+
+
+def search(query: str, location: str, window_seconds: int, max_pages: int = 3) -> list[dict]:
+    """All titles in one OR query; follows pages while LinkedIn returns full pages."""
+    jobs = []
+    for page_no in range(max_pages):
+        batch = search_page(query, location, window_seconds, start=len(jobs))
+        jobs += batch
+        if len(batch) < 10:
+            break
+        time.sleep(2)
+    return jobs
+
+
+def search_page(query: str, location: str, window_seconds: int, start: int) -> list[dict]:
+    q = urllib.parse.urlencode({"keywords": query, "location": location,
+                                "f_TPR": f"r{window_seconds}", "sortBy": "DD", "start": start})
+    SEARCHES_MADE[0] += 1
     page = http_get(f"{SEARCH_URL}?{q}")
     if not page:
-        FAILED_SEARCHES.append(f"{keyword} @ {location}")
+        FAILED_SEARCHES.append(f"{location} (start {start})")
         return []
     jobs = []
     for card in page.split("<li")[1:]:
@@ -148,6 +164,22 @@ def job_details(job_id: str) -> dict:
         "employment": first(r'Employment type\s*</h3>\s*<span[^>]*>(.*?)</span>', page),
         "closed": "No longer accepting applications" in page,
     }
+
+
+REMOTE_YES = re.compile(r"\bremote\b|work from home|work-from-home|\bwfh\b|work from anywhere|"
+                        r"home[- ]based|telecommut|distributed team", re.I)
+REMOTE_NO = re.compile(r"not (a )?remote|no remote|non-remote|remote (work )?(is )?not|"
+                       r"on-?site (only|role|position|based|work)|must (be based|reside|relocate)|"
+                       r"relocat|work from (the |our )?office|office[- ]based|"
+                       r"\bhybrid\b", re.I)
+
+
+def is_remote(job: dict, text: str) -> bool:
+    """True when the posting itself says remote and does not require office presence."""
+    head = f"{job['title']} {job['location']}"
+    if re.search(r"\bremote\b", head, re.I):
+        return not re.search(r"\bhybrid\b|on-?site", head, re.I)
+    return bool(REMOTE_YES.search(text)) and not REMOTE_NO.search(text)
 
 
 def posted_time(ago: str, now: datetime) -> datetime:
@@ -201,9 +233,10 @@ def print_chat_id(token: str):
 
 def format_message(job: dict, years: int | None, posted: datetime) -> str:
     yrs = f"{years}+ yrs" if years is not None else "years not stated"
+    where = "🏠 Remote" if job.get("remote") else "On-site / Hybrid"
     return (f"🆕 <b>{html.escape(job['title'])}</b>\n"
             f"🏢 {html.escape(job['company'])}\n"
-            f"📍 {html.escape(job['location'])}\n"
+            f"📍 {html.escape(job['location'])} · {where}\n"
             f"🕒 {html.escape(job['ago'] or 'just now')} ({posted:%H:%M})\n"
             f"🎯 {yrs} · {html.escape(job['applicants'] or '')}\n"
             f"🔗 {job['url']}")
@@ -224,12 +257,11 @@ def run(dry_run: bool):
     now = now_cairo()
 
     found = {}
-    for location in cfg["locations"]:
-        for keyword in cfg["keywords"]:
-            for j in search(keyword, location, cfg["window_seconds"]):
-                if j["id"] not in seen and QA_TITLE.search(j["title"]) and not exclude.search(j["title"]):
-                    found.setdefault(j["id"], j)
-            time.sleep(cfg["delay_seconds"])
+    for target in cfg["searches"]:
+        for j in search(cfg["query"], target["location"], cfg["window_seconds"]):
+            if j["id"] not in seen and QA_TITLE.search(j["title"]) and not exclude.search(j["title"]):
+                found.setdefault(j["id"], {**j, "remote_only": target["remote_only"]})
+        time.sleep(cfg["delay_seconds"])
 
     sent = skipped = 0
     for job_id, job in found.items():
@@ -246,11 +278,17 @@ def run(dry_run: bool):
             continue
         years = min_required_years(d["text"])
         posted = posted_time(job["ago"], now)
-        eligible = years is None or years <= cfg["max_years"]
+        job["remote"] = is_remote(job, d["text"])
+        years_ok = years is None or years <= cfg["max_years"]
+        place_ok = job["remote"] or not job["remote_only"]
+        eligible = years_ok and place_ok
         yrs_note = f"JD min {years} years" if years is not None else "Years not stated"
+        if not place_ok:
+            yrs_note += "; not remote (remote-only country)"
 
         if dry_run:
-            print(("SEND " if eligible else "SKIP ") + f"{job['title']} | {job['company']} | {yrs_note} | {job['ago']}")
+            print(("SEND " if eligible else "SKIP ") + f"{job['title']} | {job['company']} | {job['location']} | "
+                  f"{'remote' if job['remote'] else 'on-site'} | {yrs_note} | {job['ago']}")
             continue
 
         if eligible and telegram(token, chat_id, format_message(job, years, posted)):
@@ -286,7 +324,7 @@ def run(dry_run: bool):
             pass  # cloud repo: no Excel tracker, jobs.json is the record
         except PermissionError:
             log("Excel is open — tracker not refreshed this run (jobs.json is saved)")
-    total = len(cfg["locations"]) * len(cfg["keywords"])
+    total = SEARCHES_MADE[0]
     note = " — stopped early: LinkedIn rate limit / time limit" if out_of_time() else ""
     log(f"checked {len(found)} new listings: {sent} sent to Telegram, {skipped} skipped "
         f"({total - len(FAILED_SEARCHES)}/{total} searches answered by LinkedIn){note}")

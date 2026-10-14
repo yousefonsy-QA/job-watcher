@@ -1,7 +1,8 @@
 # Job Watcher
 
 Checks LinkedIn's public job search every 15 minutes for newly posted Software QA jobs
-(QA Engineer, Software Tester, SDET, Test Automation, …) in Egypt, KSA, UAE, Qatar and Kuwait,
+(QA Engineer, Software Tester, SDET, Test Automation, …) in Egypt (any workplace) and
+KSA, UAE, Qatar, Kuwait (remote only — detected from the posting text),
 skips postings whose minimum required experience is above `max_years`, and sends the rest
 to Telegram with the job link. No AI, no paid services — runs on GitHub Actions.
 

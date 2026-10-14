@@ -2,20 +2,13 @@
   "max_years": 4,
   "window_seconds": 3600,
   "delay_seconds": 3,
-  "locations": [
-    "Egypt",
-    "Saudi Arabia",
-    "United Arab Emirates",
-    "Qatar",
-    "Kuwait"
-  ],
-  "keywords": [
-    "QA Engineer",
-    "Software Tester",
-    "Quality Assurance Engineer",
-    "SDET",
-    "Test Automation Engineer",
-    "Software Quality Engineer"
+  "query": "\"QA Engineer\" OR \"Software Tester\" OR \"Quality Assurance\" OR SDET OR \"Test Automation\" OR \"Quality Engineer\" OR \"Test Engineer\" OR \"Software Testing\"",
+  "searches": [
+    {"location": "Egypt", "remote_only": false},
+    {"location": "Saudi Arabia", "remote_only": true},
+    {"location": "United Arab Emirates", "remote_only": true},
+    {"location": "Qatar", "remote_only": true},
+    {"location": "Kuwait", "remote_only": true}
   ],
   "exclude_title_words": [
     "mechanical",
@@ -34,6 +27,7 @@
     "inspector",
     "qa/qc",
     "qa qc",
+    "quality assurance[ /&-]*(and )?quality control",
     "\\bmep\\b",
     "textile",
     "chemical",
