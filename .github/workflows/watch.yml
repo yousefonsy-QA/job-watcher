@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write             # commit watcher_seen.json / jobs.json back
+  contents: write             # commit watcher_seen.json / watcher_state.json / jobs.json back
 
 jobs:
   watch:
@@ -28,7 +28,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Check LinkedIn and notify Telegram
+      - name: Self-check filters
+        run: python test_job_watcher.py
+
+      - name: Check job boards and notify Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -39,7 +42,7 @@ jobs:
         run: |
           git config user.name "job-watcher-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add watcher_seen.json jobs.json 2>/dev/null || git add watcher_seen.json
+          git add watcher_seen.json watcher_state.json jobs.json 2>/dev/null || git add watcher_seen.json watcher_state.json 2>/dev/null || git add watcher_seen.json
           git diff --cached --quiet && exit 0
           git commit -m "state: watcher run $(date -u +%Y-%m-%dT%H:%MZ)"
           for i in 1 2 3; do git pull --rebase -q && git push -q && exit 0; sleep 5; done
