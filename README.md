@@ -21,6 +21,16 @@ Wuzzuf and Bayt block automated requests, so they are not included.
 
 Skipped jobs are still recorded in `jobs.json` with the reason.
 
+## Health alerts
+Silence should mean "no new jobs", not "the watcher is broken". The watcher sends a Telegram alert when:
+- **3 runs in a row** could not really check: LinkedIn answered fewer than half of the searches
+  (rate limit / block), LinkedIn pages loaded but could not be read (layout changed), or a remote
+  board feed could not be read;
+- **a run fails** (script error or self-check tests failed) — alerted right away.
+
+While a problem lasts it reminds every 12 hours (a new kind of problem alerts immediately), and it
+sends **"back to normal"** once a run works again. Settings: `health` in `watcher_config.json`.
+
 ## Files
 - `watcher_config.json` — settings
 - `.github/workflows/watch.yml` — schedule; **Run workflow** also offers a Telegram test message
