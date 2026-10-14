@@ -568,5 +568,26 @@
     "scouted_date": "2026-10-14",
     "record_file": "",
     "notes": "SKIP (watcher): nationals only. 123 applicants"
+  },
+  {
+    "watcher_id": "4479546559",
+    "job_id": "moindeslimited_4479546559",
+    "job_title": "Platform Engineer /QA Engineer",
+    "company": "Moindes Limited",
+    "location": "Abu Dhabi Emirate, United Arab Emirates",
+    "posted_at": "2026-10-14T18:13",
+    "job_url": "https://ae.linkedin.com/jobs/view/platform-engineer-qa-engineer-at-moindes-limited-4479546559",
+    "alt_url": "",
+    "source": "LinkedIn (watcher)",
+    "employment_type": "Part-time",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-14",
+    "record_file": "",
+    "notes": "SKIP (watcher): not remote (remote-only country). 26 applicants"
   }
 ]
