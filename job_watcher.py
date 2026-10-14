@@ -1,7 +1,8 @@
 """Watch job boards for new Software QA jobs and send them to Telegram. No AI, no tokens.
 
 Every run:
-  1. LinkedIn: one OR search per country for jobs posted in the last hour.
+  1. LinkedIn: one OR search per country for jobs posted in the last `window_seconds` (3 hours),
+     so runs that GitHub delayed or LinkedIn refused leave no gaps (seen jobs are never re-sent).
      Countries marked remote_only (Gulf) keep only postings that say they are remote.
   2. Remote boards (RemoteOK, We Work Remotely, Remotive), at most once per
      `boards_every_minutes`: keep QA jobs open to candidates in Egypt / worldwide.

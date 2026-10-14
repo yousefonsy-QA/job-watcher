@@ -1,6 +1,6 @@
 {
   "max_years": 4,
-  "window_seconds": 3600,
+  "window_seconds": 10800,
   "delay_seconds": 3,
   "health": {
     "alert_after_bad_runs": 3,

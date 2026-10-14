@@ -7,7 +7,7 @@ every 15 minutes (GitHub may stretch that to ~30 minutes at busy times).
 ## Sources
 | Source | What is kept |
 |:--|:--|
-| LinkedIn (public job search, last hour) | Egypt: any workplace. KSA, UAE, Qatar, Kuwait: **remote only** (read from the posting text — LinkedIn's public pages ignore the remote filter) |
+| LinkedIn (public job search, last 3 hours — already-seen jobs are never re-sent) | Egypt: any workplace. KSA, UAE, Qatar, Kuwait: **remote only** (read from the posting text — LinkedIn's public pages ignore the remote filter) |
 | [Remote OK](https://remoteok.com), [We Work Remotely](https://weworkremotely.com), [Remotive](https://remotive.com) | Remote QA jobs open worldwide / EMEA / Middle East / Africa / Egypt, posted in the last 72 hours. Checked once an hour. Remotive's API delays jobs by 24 hours. |
 
 Wuzzuf and Bayt block automated requests, so they are not included.
