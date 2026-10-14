@@ -8,12 +8,15 @@ Every run:
   3. Filter: QA title, excluded titles/domains, nationals-only, mandatory foreign
      language, minimum required years <= max_years.
   4. Send eligible jobs to Telegram; record every new job in jobs.json.
+  5. Health: alert on Telegram after 3 runs in a row that could not really check
+     (LinkedIn refusing requests, pages no longer readable, feeds down), and when it recovers.
 
 Usage:
   python job_watcher.py              one check (GitHub Actions runs this)
   python job_watcher.py --dry-run    one check, print only, save/send nothing
   python job_watcher.py --test       send a Telegram test message
   python job_watcher.py --chat-id    print your Telegram chat id (setup)
+  python job_watcher.py --notify-failure   Telegram alert when a workflow step failed
 
 Settings: watcher_config.json. Secrets: environment variables (GitHub Actions secrets)
 or .env in the parent folder.
@@ -168,6 +171,8 @@ def new_job(**kw) -> dict:
 # ---------------------------------------------------------------- LinkedIn
 FAILED_SEARCHES: list[str] = []
 SEARCHES_MADE = [0]
+PARSE_ISSUES: list[str] = []   # pages that loaded but could not be read (site layout changed?)
+BOARD_ISSUES: list[str] = []   # remote boards whose feed could not be read
 
 
 def linkedin_jobs(cfg: dict) -> list[dict]:
@@ -213,6 +218,8 @@ def linkedin_search_page(query: str, location: str, window_seconds: int, start: 
             location=first(r'job-search-card__location[^>]*>(.*?)</span>', card),
             ago=first(r'<time[^>]*>(.*?)</time>', card),
         ))
+    if not jobs and "<li" in page:  # an empty result is a tiny page with no <li>; cards we can't read are not
+        PARSE_ISSUES.append(f"LinkedIn search results ({location})")
     return jobs
 
 
@@ -222,6 +229,8 @@ def linkedin_details(job: dict) -> bool:
     text = strip_tags(first(r'show-more-less-html__markup[^>]*>(.*?)</div>', page) or "")
     closed = "No longer accepting applications" in page
     if not text and not closed:
+        if len(page) > 5000:  # full page arrived but the description block was not found
+            PARSE_ISSUES.append("LinkedIn job page")
         return False
     job.update(text=text, closed=closed,
                applicants=first(r'num-applicants__caption[^>]*>(.*?)</', page),
@@ -304,11 +313,78 @@ def board_jobs(cfg: dict, state: dict, now: datetime) -> list[dict]:
         if name not in cfg["boards"]:
             continue
         try:
-            jobs += fetch()
+            found = fetch()
         except (ValueError, KeyError) as e:
             log(f"{name}: could not read feed ({e})")
+            found = []
+        if not found:  # these feeds always list dozens of jobs; empty means unreachable or changed
+            BOARD_ISSUES.append(name)
+        jobs += found
         time.sleep(cfg["delay_seconds"])
     return jobs
+
+
+# ---------------------------------------------------------------- health alerts
+def run_problems(cfg: dict) -> list[str]:
+    """Signs that this run did not really check for jobs (as opposed to there being no new jobs)."""
+    problems = []
+    made, failed = SEARCHES_MADE[0], len(FAILED_SEARCHES)
+    if made and (made - failed) / made < cfg["health"]["min_answered_ratio"]:
+        problems.append(f"LinkedIn answered only {made - failed}/{made} searches (rate limit or block)")
+    if PARSE_ISSUES:
+        problems.append("LinkedIn pages loaded but jobs could not be read — the page layout may have "
+                        f"changed ({', '.join(sorted(set(PARSE_ISSUES)))[:120]})")
+    if BOARD_ISSUES:
+        problems.append(f"Could not read remote board feed: {', '.join(BOARD_ISSUES)}")
+    return problems
+
+
+def update_health(state: dict, problems: list[str], cfg: dict, now: datetime, notify) -> None:
+    """Alert after N bad runs in a row, remind while it lasts, and say when it is back to normal.
+
+    `notify(text)` sends a Telegram message. State lives in state["health"].
+    """
+    h = state.setdefault("health", {"bad_streak": 0, "alerted_at": None, "alerted_kinds": []})
+    if not problems:
+        if h.get("alerted_at"):
+            notify("✅ <b>Job watcher is back to normal.</b>\nJobs are being checked again.")
+        h.update(bad_streak=0, alerted_at=None, alerted_kinds=[])
+        return
+    h["bad_streak"] = h.get("bad_streak", 0) + 1
+    if h["bad_streak"] < cfg["health"]["alert_after_bad_runs"]:
+        return
+    kinds = sorted({p[:24] for p in problems})
+    new_kind = not set(kinds) <= set(h.get("alerted_kinds") or [])
+    last = h.get("alerted_at")
+    if (not new_kind and last
+            and now - datetime.fromisoformat(last) < timedelta(hours=cfg["health"]["remind_every_hours"])):
+        return
+    h["alerted_kinds"] = sorted(set(h.get("alerted_kinds") or []) | set(kinds))
+    notify(f"⚠️ <b>Job watcher problem</b> — {h['bad_streak']} runs in a row\n"
+           + "\n".join(f"• {html.escape(p)}" for p in problems)
+           + "\n\nNo message from the watcher right now does <b>not</b> mean there are no new jobs."
+           + f"\n{actions_url()}")
+    h["alerted_at"] = now.isoformat(timespec="minutes")
+
+
+def actions_url() -> str:
+    repo = os.environ.get("GITHUB_REPOSITORY", "yousefonsy-QA/job-watcher")
+    run_id = os.environ.get("GITHUB_RUN_ID")
+    return f"https://github.com/{repo}/actions" + (f"/runs/{run_id}" if run_id else "")
+
+
+def notify_failure():
+    """Called by the workflow when a step failed (script crash or self-check tests failed)."""
+    cfg, env, state = load_json(CONFIG_FILE, {}), load_env(), load_json(STATE_FILE, {})
+    now = now_cairo()
+
+    def notify(text):
+        tg_call(env["TELEGRAM_BOT_TOKEN"], "sendMessage", {"chat_id": env["TELEGRAM_CHAT_ID"], "text": text,
+                                                            "parse_mode": "HTML", "disable_web_page_preview": "true"})
+    # a crashed run counts as a bad run; alert right away (it will not fix itself)
+    cfg = {**cfg, "health": {**cfg["health"], "alert_after_bad_runs": 1}}
+    update_health(state, ["The watcher run failed (script error or self-check tests failed)"], cfg, now, notify)
+    save_json(STATE_FILE, state)
 
 
 # ---------------------------------------------------------------- filters
@@ -507,6 +583,9 @@ def run(dry_run: bool):
     if dry_run:
         print(f"{len(candidates)} new QA listings (dry run, nothing saved)")
         return
+    problems = run_problems(cfg)
+    update_health(state, problems, cfg, now, lambda text: tg_call(token, "sendMessage", {
+        "chat_id": chat_id, "text": text, "parse_mode": "HTML", "disable_web_page_preview": "true"}))
     save_json(SEEN_FILE, sorted(seen), pretty=False)
     save_json(STATE_FILE, state)
     if sent or skipped:
@@ -515,6 +594,8 @@ def run(dry_run: bool):
     note = " — stopped early: LinkedIn rate limit / time limit" if out_of_time() else ""
     log(f"checked {len(candidates)} new listings: {sent} sent to Telegram, {skipped} skipped "
         f"({total - len(FAILED_SEARCHES)}/{total} LinkedIn searches answered){note}")
+    if problems:
+        log(f"health: bad run {state['health']['bad_streak']} in a row — " + " | ".join(problems))
 
 
 def send_test(env: dict):
@@ -534,5 +615,7 @@ if __name__ == "__main__":
         print_chat_id(load_env()["TELEGRAM_BOT_TOKEN"])
     elif arg == "--test":
         send_test(load_env())
+    elif arg == "--notify-failure":
+        notify_failure()
     else:
         run(dry_run=arg == "--dry-run")

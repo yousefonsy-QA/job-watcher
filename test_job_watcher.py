@@ -59,5 +59,52 @@ class Filters(unittest.TestCase):
                                **ok).startswith("region lock"))
 
 
+class Health(unittest.TestCase):
+    def setUp(self):
+        self.sent, self.state = [], {}
+        self.t0 = w.datetime(2026, 10, 14, 1, 0)
+
+    def step(self, problems, minutes):
+        w.update_health(self.state, problems, CFG, self.t0 + w.timedelta(minutes=minutes), self.sent.append)
+
+    def test_alert_after_three_bad_runs_then_quiet_then_recovery(self):
+        block = ["LinkedIn answered only 1/5 searches (rate limit or block)"]
+        self.step(block, 0); self.step(block, 30)
+        self.assertEqual(self.sent, [])                      # 2 bad runs: no alert yet
+        self.step(block, 60)
+        self.assertEqual(len(self.sent), 1)                  # 3rd bad run: alert
+        self.assertIn("3 runs in a row", self.sent[0])
+        self.step(block, 90); self.step(block, 120)
+        self.assertEqual(len(self.sent), 1)                  # no spam every run
+        self.step(block, 60 + 12 * 60)
+        self.assertEqual(len(self.sent), 2)                  # reminder after 12 hours
+        self.step([], 60 + 12 * 60 + 30)
+        self.assertIn("back to normal", self.sent[-1])       # recovery message
+        self.step([], 60 + 12 * 60 + 60)
+        self.assertEqual(len(self.sent), 3)                  # only once
+
+    def test_one_bad_run_is_ignored(self):
+        self.step(["LinkedIn answered only 0/5 searches (rate limit or block)"], 0)
+        self.step([], 30)
+        self.assertEqual(self.sent, [])
+
+    def test_new_kind_of_problem_alerts_immediately(self):
+        block = ["LinkedIn answered only 1/5 searches (rate limit or block)"]
+        for m in (0, 30, 60):
+            self.step(block, m)
+        self.step(block + ["Could not read remote board feed: wwr"], 90)
+        self.assertEqual(len(self.sent), 2)
+
+    def test_run_problems(self):
+        w.SEARCHES_MADE[0], w.FAILED_SEARCHES[:] = 5, ["a", "b", "c"]
+        w.PARSE_ISSUES[:], w.BOARD_ISSUES[:] = [], []
+        self.assertTrue(w.run_problems(CFG)[0].startswith("LinkedIn answered only 2/5"))
+        w.FAILED_SEARCHES[:] = ["a"]
+        self.assertEqual(w.run_problems(CFG), [])
+        w.PARSE_ISSUES.append("LinkedIn job page")
+        self.assertIn("layout may have changed", w.run_problems(CFG)[0])
+        w.SEARCHES_MADE[0], w.FAILED_SEARCHES[:], w.PARSE_ISSUES[:] = 0, [], []
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

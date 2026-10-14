@@ -2,6 +2,11 @@
   "max_years": 4,
   "window_seconds": 3600,
   "delay_seconds": 3,
+  "health": {
+    "alert_after_bad_runs": 3,
+    "remind_every_hours": 12,
+    "min_answered_ratio": 0.5
+  },
   "query": "\"QA Engineer\" OR \"Software Tester\" OR \"Quality Assurance\" OR SDET OR \"Test Automation\" OR \"Quality Engineer\" OR \"Test Engineer\" OR \"Software Testing\"",
   "searches": [
     {
