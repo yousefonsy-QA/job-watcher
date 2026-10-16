@@ -1429,5 +1429,26 @@
     "scouted_date": "2026-10-16",
     "record_file": "",
     "notes": "SKIP (watcher): not remote (remote-only country). Over 200 applicants"
+  },
+  {
+    "watcher_id": "4477386820",
+    "job_id": "softana_4477386820",
+    "job_title": "Senior QA Automation",
+    "company": "Softana",
+    "location": "Ras al-Khaimah, United Arab Emirates",
+    "posted_at": "2026-10-16T16:51",
+    "job_url": "https://ae.linkedin.com/jobs/view/senior-qa-automation-at-softana-4477386820",
+    "alt_url": "",
+    "source": "LinkedIn (watcher)",
+    "employment_type": "Full-time",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-16",
+    "record_file": "",
+    "notes": "SKIP (watcher): not remote (remote-only country). Be among the first 25 applicants"
   }
 ]
