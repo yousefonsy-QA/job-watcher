@@ -2206,5 +2206,26 @@
     "scouted_date": "2026-10-19",
     "record_file": "",
     "notes": "SKIP (watcher): not remote (remote-only country). 35 applicants"
+  },
+  {
+    "watcher_id": "wwr:proxify-ab-senior-qa-automation-engineer-1",
+    "job_id": "proxifyab_ionengineer1",
+    "job_title": "Senior QA Automation Engineer",
+    "company": "Proxify AB",
+    "location": "Anywhere in the World",
+    "posted_at": "2026-10-19T12:33",
+    "job_url": "https://weworkremotely.com/remote-jobs/proxify-ab-senior-qa-automation-engineer-1",
+    "alt_url": "",
+    "source": "We Work Remotely (watcher)",
+    "employment_type": "UNKNOWN",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-19",
+    "record_file": "",
+    "notes": "SKIP (watcher): JD min 5 years. Remote. "
   }
 ]
