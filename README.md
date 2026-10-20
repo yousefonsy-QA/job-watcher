@@ -33,7 +33,9 @@ sends **"back to normal"** once a run works again. Settings: `health` in `watche
 
 ## Two runners: laptop + GitHub
 LinkedIn often refuses requests from GitHub's servers but answers a home connection, so the watcher
-also runs on the laptop (Windows Task Scheduler, every 15 minutes, `local_runner.py` in its own clone).
+also runs on the laptop (Windows Task Scheduler, every 15 minutes, `local_runner.py` in this same
+folder). A laptop run is skipped while code here is edited or committed but not pushed, so it never
+overwrites work in progress; GitHub covers those runs.
 
 - Each laptop run pushes a heartbeat (`local_heartbeat_utc` in `watcher_state.json`).
 - A GitHub run that sees a heartbeat younger than `local_active_minutes` (25) skips itself.

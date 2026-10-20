@@ -20,7 +20,7 @@ Usage:
   python job_watcher.py --notify-failure   Telegram alert when a workflow step failed
 
 Settings: watcher_config.json. Secrets: environment variables (GitHub Actions secrets)
-or .env in the parent folder.
+or .env in this folder (git-ignored).
 """
 import html
 import json
@@ -41,7 +41,7 @@ SEEN_FILE = HERE / "watcher_seen.json"
 STATE_FILE = HERE / "watcher_state.json"
 JOBS_FILE = HERE / "jobs.json"
 LOG_FILE = HERE / "watcher.log"
-ENV_FILE = HERE.parent / ".env"
+ENV_FILE = HERE / ".env"  # git-ignored; the laptop runner reads its Telegram secrets from here
 
 LINKEDIN_SEARCH = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 LINKEDIN_JOB = "https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{}"

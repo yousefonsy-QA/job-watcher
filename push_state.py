@@ -5,8 +5,8 @@ same time the second push is rejected; instead of failing (or overwriting), this
 seen IDs and jobs are combined, and timestamps keep the newest value.
 
 Usage: python push_state.py "commit message"
-Only used in the GitHub Actions checkout and the laptop runner's own clone — it refuses to run
-when files other than the state files are modified, so it never touches development work.
+Used by the GitHub Actions checkout and by local_runner.py — it refuses to run when files other
+than the state files are modified, so it never touches development work.
 """
 import json
 import subprocess

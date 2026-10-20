@@ -2,3 +2,6 @@
 watcher.log
 __pycache__/
 runner.log
+# local-only notes (personal details; never in the public repo)
+HANDOFF.md
+CLAUDE.md
