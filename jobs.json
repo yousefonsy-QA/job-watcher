@@ -2878,5 +2878,26 @@
     "scouted_date": "2026-10-20",
     "record_file": "",
     "notes": "Years not stated. 31 applicants"
+  },
+  {
+    "watcher_id": "4481766174",
+    "job_id": "htcglobalservi_4481766174",
+    "job_title": "QA Engineer - Airline (DCS)",
+    "company": "HTC Global Services",
+    "location": "Dubai, United Arab Emirates",
+    "posted_at": "2026-10-20T22:13",
+    "job_url": "https://ae.linkedin.com/jobs/view/qa-engineer-airline-dcs-at-htc-global-services-4481766174",
+    "alt_url": "",
+    "source": "LinkedIn (watcher)",
+    "employment_type": "Contract",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-20",
+    "record_file": "",
+    "notes": "SKIP (watcher): not remote (remote-only country). Be among the first 25 applicants"
   }
 ]
