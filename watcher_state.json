@@ -1,7 +1,7 @@
 {
   "boards_last_fetch": "2026-10-20T06:13",
   "health": {
-    "bad_streak": 1,
+    "bad_streak": 0,
     "alerted_at": null,
     "alerted_kinds": []
   },
