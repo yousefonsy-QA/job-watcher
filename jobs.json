@@ -3613,5 +3613,26 @@
     "scouted_date": "2026-10-22",
     "record_file": "",
     "notes": "SKIP (watcher): JD min 7 years. Over 200 applicants"
+  },
+  {
+    "watcher_id": "4480060472",
+    "job_id": "edgroup_4480060472",
+    "job_title": "Software Testing & Development Engineer",
+    "company": "eD group",
+    "location": "Abu Dhabi Emirate, United Arab Emirates",
+    "posted_at": "2026-10-22T18:59",
+    "job_url": "https://ae.linkedin.com/jobs/view/software-testing-development-engineer-at-ed-group-4480060472",
+    "alt_url": "",
+    "source": "LinkedIn (watcher)",
+    "employment_type": "Full-time",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-22",
+    "record_file": "",
+    "notes": "SKIP (watcher): not remote (remote-only country). Be among the first 25 applicants"
   }
 ]
