@@ -3886,5 +3886,26 @@
     "scouted_date": "2026-10-23",
     "record_file": "",
     "notes": "SKIP (watcher): not remote (remote-only country). Be among the first 25 applicants"
+  },
+  {
+    "watcher_id": "4398113447",
+    "job_id": "lenovo_4398113447",
+    "job_title": "PCG Testing Engineer",
+    "company": "Lenovo",
+    "location": "Riyadh, Riyadh, Saudi Arabia",
+    "posted_at": "2026-10-23T22:41",
+    "job_url": "https://sa.linkedin.com/jobs/view/pcg-testing-engineer-at-lenovo-4398113447",
+    "alt_url": "",
+    "source": "LinkedIn (watcher)",
+    "employment_type": "Full-time",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-24",
+    "record_file": "",
+    "notes": "SKIP (watcher): not remote (remote-only country). Over 200 applicants"
   }
 ]
