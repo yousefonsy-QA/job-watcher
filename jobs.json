@@ -3907,5 +3907,26 @@
     "scouted_date": "2026-10-24",
     "record_file": "",
     "notes": "SKIP (watcher): not remote (remote-only country). Over 200 applicants"
+  },
+  {
+    "watcher_id": "4483155655",
+    "job_id": "agilegridsolut_4483155655",
+    "job_title": "GenAI QA Analyst",
+    "company": "AgileGrid Solutions",
+    "location": "Saudi Arabia",
+    "posted_at": "2026-10-24T02:03",
+    "job_url": "https://sa.linkedin.com/jobs/view/genai-qa-analyst-at-agilegrid-solutions-4483155655",
+    "alt_url": "",
+    "source": "LinkedIn (watcher)",
+    "employment_type": "Full-time",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-24",
+    "record_file": "",
+    "notes": "SKIP (watcher): not remote (remote-only country). Be among the first 25 applicants"
   }
 ]
