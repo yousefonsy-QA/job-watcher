@@ -4978,5 +4978,26 @@
     "scouted_date": "2026-10-29",
     "record_file": "",
     "notes": "SKIP (watcher): not remote (remote-only country). Over 200 applicants"
+  },
+  {
+    "watcher_id": "4445159900",
+    "job_id": "lenovo_4445159900",
+    "job_title": "ISG Test Engineer (Saudi National)",
+    "company": "Lenovo",
+    "location": "Riyadh, Riyadh, Saudi Arabia",
+    "posted_at": "2026-10-29T21:18",
+    "job_url": "https://sa.linkedin.com/jobs/view/isg-test-engineer-saudi-national-at-lenovo-4445159900",
+    "alt_url": "",
+    "source": "LinkedIn (watcher)",
+    "employment_type": "Full-time",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-10-29",
+    "record_file": "",
+    "notes": "SKIP (watcher): nationals only. Over 200 applicants"
   }
 ]
