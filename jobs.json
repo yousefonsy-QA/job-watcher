@@ -7540,5 +7540,26 @@
     "scouted_date": "2026-11-21",
     "record_file": "",
     "notes": "Years not stated. Remote. Be among the first 25 applicants"
+  },
+  {
+    "watcher_id": "remoteok:1137914",
+    "job_id": "quartermaster_oteok1137914",
+    "job_title": "Quality Engineer",
+    "company": "Quartermaster",
+    "location": "Arlington",
+    "posted_at": "2026-11-20T18:00",
+    "job_url": "https://remoteOK.com/remote-jobs/remote-quality-engineer-quartermaster-1137914",
+    "alt_url": "",
+    "source": "Remote OK (watcher)",
+    "employment_type": "UNKNOWN",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-11-21",
+    "record_file": "",
+    "notes": "SKIP (watcher): remote only for Arlington. Remote. "
   }
 ]
