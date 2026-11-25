@@ -8002,5 +8002,26 @@
     "scouted_date": "2026-11-25",
     "record_file": "",
     "notes": "SKIP (watcher): not remote (remote-only country). Be among the first 25 applicants"
+  },
+  {
+    "watcher_id": "wwr:oddball-qa-test-engineer",
+    "job_id": "oddball_testengineer",
+    "job_title": "QA/Test Engineer",
+    "company": "Oddball",
+    "location": "USA Only",
+    "posted_at": "2026-11-25T19:00",
+    "job_url": "https://weworkremotely.com/remote-jobs/oddball-qa-test-engineer",
+    "alt_url": "",
+    "source": "We Work Remotely (watcher)",
+    "employment_type": "UNKNOWN",
+    "status": "SKIPPED",
+    "match_score": "N/A",
+    "opportunity_score": "N/A",
+    "wishlist": "No",
+    "salary": "UNKNOWN",
+    "easy_apply": "UNKNOWN",
+    "scouted_date": "2026-11-25",
+    "record_file": "",
+    "notes": "SKIP (watcher): remote only for USA Only. Remote. "
   }
 ]
